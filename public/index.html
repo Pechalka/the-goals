@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:fb="http://ogp.me/ns/fb#">
+<head>
+	<meta charset="utf-8">
+	<title>Knockout Test</title>
+	<link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.css" />
+</head>
+<body>
+
+<div class="container" >
+	<div class="row">
+		<div  class="span8">
+			<div id="diagram" style="border: 1px solid; background: #999;">
+			</div>
+		</div>	
+		<div class="span4 ">
+			<table style="cursor : pointer" class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Категория</th>
+                  <th>Оценка</th>
+                </tr>
+              </thead>
+              <tbody data-bind="foreach : categories">
+                <tr  data-bind="event: { mouseover: $parent.mouseover, mouseout: $parent.mouseout }, css : { info : title == $parent.selectedCategory()}, click : $parent.selectCategory">
+                  <td data-bind="text : title"></td>
+                  <td ><input data-bind="value : value" type="text" class="input-mini"/> </td>
+                </tr>
+              </tbody>
+            </table>
+		</div>
+	</div>
+	<h1 data-bind="text : selectedCategory"></h1>
+	<div class="row">
+		<div class="span6">
+<table  class="table ">
+              <thead>
+                <tr>
+                  <th>Цели</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody style="cursor : pointer">
+              	<!-- ko foreach : goals -->
+                <tr  data-bind="css : { success : done}, click : $parent.toggleGoalDone">
+                  <td data-bind="text : text"></td>    
+                  <td><a data-bind="click : $parent.removeGoal" href="" class="btn btn-danger btn-mini">x</a></td>           
+                </tr>
+                <!-- /ko -->
+                <tr>
+
+                  <td>
+                  	<input data-bind="value : goalText" type="text" class="input-large"/></td>    
+                  <td>
+                  	<a data-bind="click : addGoal" href="" class="btn  btn-success btn-mini">добавить</a>
+                  </td>           
+                </tr>
+              </tbody>
+              </table>
+		</div>
+		<div class="span6">
+<table  class="table ">
+              <thead>
+                <tr>
+                  <th>Действия</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody style="cursor : pointer">
+              	<!-- ko foreach : actions -->
+                <tr  data-bind="css : { success : done}, click : $parent.toggleActionDone">
+                  <td data-bind="text : text"></td>    
+                  <td><a data-bind="click : $parent.removeAction" href="" class="btn btn-danger btn-mini">x</a></td>           
+                </tr>
+                <!-- /ko -->
+                <tr>
+
+                  <td>
+                  	<input data-bind="value : actionText" type="text" class="input-large"/></td>    
+                  <td>
+                  	<a data-bind="click : addAction" href="" class="btn  btn-success btn-mini">добавить</a>
+                  </td>           
+                </tr>
+              </tbody>
+              </table>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript"  src="js/knockout-2.3.0.js"></script>
+<script type="text/javascript"  src="js/jquery.js"></script>
+<script type="text/javascript"  src="bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript"  src="js/d3.v3.min.js"></script>
+<script type="text/javascript"  src="js/knockout.localStorage.js"></script>
+<script type="text/javascript">
+
+var draw = function(selector, data){
+	$(selector).empty();
+
+    var width = 600;
+    var height = 600;
+    var outerRadius = Math.min(width, height) / 2;
+    var innerRadius = outerRadius * .4;        
+    var offest = 20;
+
+    var donut = d3.layout.pie();
+    donut.value(function (d) { return 10; });
+
+    var color = d3.scale.category20();
+
+	var diagram = d3.select(selector);
+	var context = diagram
+	    .append("svg")
+	    .data([data])
+	    .attr("width", 600)
+	    .attr("height", 600);
+
+ var arc2 = d3.svg.arc()
+	   .innerRadius(0)
+	   .outerRadius(250); 
+
+	var arcs2 = context.selectAll("g.arc2")
+        .data(donut)
+        .enter().append("g")
+        .attr("class", "arc2")
+        .attr("transform", "translate(" + (outerRadius) + "," + (outerRadius ) + ")");
+		
+     	arcs2.append("path")
+                .attr("fill", '#fff') 
+				.attr("d", arc2)
+                .style("stroke", "#000")
+                .style('stroke-width', 2);    
+            	
+
+       var arc = d3.svg.arc()
+	   .innerRadius(function(d, i){
+	   		return 0;	
+	   })
+	   .outerRadius(function(d, i){
+	   		return d.data.value*25;
+	   });
+	
+	var arcs = context.selectAll("g.arc")
+        .data(donut)
+        .enter().append("g")
+        .attr("class", "arc")
+        .attr("id", function(d, i){ 
+        	return d.data.id; 
+        })
+        .attr("transform", "translate(" + (outerRadius) + "," + (outerRadius ) + ")");
+		
+		arcs.append("path")
+                .attr("fill", function (d, i) { return color(i); }) 
+				.attr("d", arc)
+                .style("stroke", "#000")
+                .style('stroke-width', 2);
+
+
+               	
+}
+
+var selectArc = function(category){
+		var arc = d3.svg.arc()
+		   .innerRadius(25)
+		   .outerRadius(category.value() * 25 + 25);
+
+		d3.select("#diagram")
+		.selectAll("#" + category.id + " path")
+		.attr("d", arc)	
+		.style("stroke", "red")
+        .style('stroke-width', 2);
+}
+
+var unselectArc = function(category){
+		var arc = d3.svg.arc()
+		   .innerRadius(0)
+		   .outerRadius(category.value() * 25);
+
+		d3.select("#diagram")
+		.selectAll("#" + category.id + " path")
+		.attr("d", arc)
+		.style("stroke", "#000")
+        .style('stroke-width', 2);	
+}
+
+
+var Category = function(data){
+	var self = this;
+	self.title = data.title;
+	self.id = data.id;
+	self.value = ko.observable(data.value);
+}
+
+var Action = function(data){
+	var self = this;
+	self.category = data.category;
+	self.done = ko.observable(data.done);
+	self.text = data.text;
+}
+
+
+var Goal = function(data){
+	var self = this;
+	self.category = data.category;
+	self.done = ko.observable(data.done);
+	self.text = data.text;
+}
+
+var Page = function(data){
+	var self = this;
+	var categories = ko.utils.arrayMap(data, function(d){ return new Category(d)});
+	self.categories = ko.observableArray(categories)
+						.extend({ 
+							localStorage : { 
+								key : 'goals.categories' ,
+							 	map : Category 
+							 }
+						});
+	self.selectedCategory = ko.observable(categories.title)
+						.extend({ 
+							localStorage : { 
+								key : 'goals.selectedCategory'
+							 }
+						});
+
+	ko.computed(function(){
+		var items = ko.toJS(self.categories);
+		draw("#diagram", items);
+		self.categories.save();		
+	})
+
+
+	self.selectCategory = function(category){
+		self.selectedCategory(category.title);
+	}
+
+	self.mouseover = function(category){
+		selectArc(category);
+	}
+
+	self.mouseout = function(category){
+		unselectArc(category);
+	}
+
+
+	var allGoals = ko.observableArray()
+						.extend({ 
+							localStorage : { 
+								key : 'goals.goals' ,
+							 	map : Goal 
+							 }
+						});
+	self.goals = ko.computed(function(){
+		return ko.utils.arrayFilter(allGoals(), function(goal){
+			return goal.category == self.selectedCategory();
+		})
+	})
+
+	self.goalText = ko.observable('');
+	self.addGoal = function(){
+		var text = self.goalText();
+		allGoals.push(new Goal({ 
+			done : false, 
+			category : self.selectedCategory(), 
+			text : text 
+		}))
+		self.goalText('');
+	}
+
+	self.removeGoal = function(goal){
+		allGoals.remove(goal);
+	}
+
+	self.toggleGoalDone = function(goal){
+		goal.done(!goal.done())
+		allGoals.save();
+	}
+
+
+	var allActions = ko.observableArray()
+						.extend({ 
+							localStorage : { 
+								key : 'goals.action' ,
+							 	map : Action 
+							 }
+						});
+	self.actions = ko.computed(function(){
+		return ko.utils.arrayFilter(allActions(), function(action){
+			return action.category == self.selectedCategory();
+		})
+	})
+
+	self.actionText = ko.observable('');
+	self.addAction = function(){
+		var text = self.actionText();
+		allActions.push(new Action({ 
+			done : false, 
+			category : self.selectedCategory(), 
+			text : text 
+		}))
+		self.actionText('');
+	}
+
+	self.removeAction = function(action){
+		allActions.remove(action);
+	}
+
+	self.toggleActionDone = function(action){
+		action.done(!action.done())
+		allActions.save();
+	}
+
+}
+
+$(function() {
+	
+	var data = [
+		{ id : 'c1', title : 'Здоровье', value : 1 },
+        { id : 'c2', title : 'Друзья', value : 1 },
+        { id : 'c3', title : 'Отношения', value : 1 },
+        { id : 'c4',  title : 'Карьера, бизнес', value : 1 },
+        { id : 'c5', title : 'Финансы', value : 1 },
+        { id : 'c6', title : 'Духовность, творчество', value : 1 },
+        { id : 'c7', title : 'Личный рост', value : 1 },
+        { id : 'c8', title : 'Яркость жизни', value : 1 }			
+	];
+
+
+	ko.applyBindings(new Page(data));
+
+})
+</script>
+</body>
+</html>
